@@ -9,6 +9,7 @@ from src.apps import schemas
 from src.apps.models import UserTable
 from src.db import get_async_session
 from src.services.auth import current_user
+from src.logger import logger
 
 router_user = APIRouter(
     tags=["Users"],
@@ -37,22 +38,26 @@ async def get_all_users(session: AsyncSession = Depends(get_async_session)):
             FROM users
             """
     )
-    result = await session.execute(query)
-    user_dicts = result.mappings().fetchall()
-    users = [
-        schemas.UserSchema(
-            id=user_dict["id"],
-            username=user_dict["username"],
-            email=user_dict["email"],
-            avatar=user_dict["avatar"],
-            phone_number=user_dict["phone_number"],
-            is_active=user_dict["is_active"],
-            is_superuser=user_dict["is_superuser"],
-            is_verified=user_dict["is_verified"],
-        )
-        for user_dict in user_dicts
-    ]
-    return users
+    try:
+        result = await session.execute(query)
+        user_dicts = result.mappings().fetchall()
+        users = [
+            schemas.UserSchema(
+                id=user_dict["id"],
+                username=user_dict["username"],
+                email=user_dict["email"],
+                avatar=user_dict["avatar"],
+                phone_number=user_dict["phone_number"],
+                is_active=user_dict["is_active"],
+                is_superuser=user_dict["is_superuser"],
+                is_verified=user_dict["is_verified"],
+            )
+            for user_dict in user_dicts
+        ]
+        return users
+    except Exception as e:
+        logger.error(f"Error in get_all_users: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
 
 
 @router_user.get(
@@ -84,6 +89,7 @@ async def get_user_by_id(id: int, session: AsyncSession = Depends(get_async_sess
     row: CursorResult = await session.execute(query)
     user_row = row.mappings().fetchone()
     if user_row is None:
+        logger.info("User not found", extra={"status_code": 404})
         raise HTTPException(status_code=404, detail="User not found")
     user_dict = dict(user_row)
     user_schema = schemas.UserSchema(**user_dict)
@@ -118,6 +124,7 @@ async def get_current_user(
     row: CursorResult = await session.execute(query)
     user_row = row.mappings().fetchone()
     if user_row is None:
+        logger.info("User not found", extra={"status_code": 404})
         raise HTTPException(status_code=404, detail="User not found")
     user_dict = dict(user_row)
     user_schema = schemas.UserSchema(**user_dict)
@@ -197,7 +204,7 @@ async def delete_current_user(
 
     await session.execute(query)
     await session.commit()
-    return {"message": "Пользователь удален"}
+    return {"message": "User deleted"}
 
 
 @router_user.delete("/{id}")
@@ -221,7 +228,8 @@ async def delete_user_by_id(
         dict: Словарь с сообщением об успешном удалении пользователя.
     """
     if not (user.is_superuser or id == user.id):
-        raise HTTPException(status_code=403, detail="У вас нет прав на это действие.")
+        logger.info("You don't have the rights to do this", extra={"status_code": 403})
+        raise HTTPException(status_code=403, detail="You don't have the rights to do this.")
     query = text(
         """
         DELETE FROM users WHERE id = :user_id
@@ -229,7 +237,7 @@ async def delete_user_by_id(
     ).bindparams(user_id=id)
     await session.execute(query)
     await session.commit()
-    return {"message": "Пользователь удален"}
+    return {"message": "User deleted"}
 
 
 @router_user.get(
@@ -275,5 +283,6 @@ async def search_users(
         user_schema = schemas.UserSchema(**user_dict)
         user_list.append(user_schema)
     if not user_list:
-        return {"message": "Пользователя с таким username не найдено."}
+        logger.info("There is no user with this name in the database.", extra={"status_code": 404})
+        raise HTTPException(status_code=404, detail="There is no user with this name in the database.")
     return user_list
