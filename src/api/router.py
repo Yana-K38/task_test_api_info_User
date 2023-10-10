@@ -22,6 +22,15 @@ router_user = APIRouter(
     response_model=List[schemas.UserSchema],
 )
 async def get_all_users(session: AsyncSession = Depends(get_async_session)):
+    """
+    Получение списка всех пользователей.
+
+    Args:
+        session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        List[schemas.UserSchema]: Список моделей данных всех пользователей в системе.
+    """
     query = text(
         """
             SELECT id, username, email, avatar, phone_number, is_active, is_superuser, is_verified
@@ -52,6 +61,19 @@ async def get_all_users(session: AsyncSession = Depends(get_async_session)):
     response_model=schemas.UserSchema,
 )
 async def get_user_by_id(id: int, session: AsyncSession = Depends(get_async_session)):
+    """
+    Получение информации о пользователе по его ID.
+
+    Args:
+        id (int): Идентификатор пользователя.
+        session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        schemas.UserSchema: Модель данных пользователя.
+
+    Raises:
+        HTTPException: Если пользователь с указанным ID не найден.
+    """
     query = text(
         """
             SELECT id, username, email, avatar, phone_number, is_active, is_superuser, is_verified
@@ -73,6 +95,19 @@ async def get_current_user(
     user: UserTable = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
+    """
+    Получение информации о текущем пользователе.
+
+    Args:
+        user (UserTable): Текущий авторизованный пользователь.
+        session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        schemas.UserSchema: Модель данных текущего пользователя.
+
+    Raises:
+        HTTPException: Если текущий пользователь не найден.
+    """
     query = text(
         """
         SELECT id, email, username, avatar, phone_number, is_active, is_superuser, is_verified
@@ -95,6 +130,20 @@ async def update_current_user(
     user: UserTable = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
+    """
+    Обновление информации о текущем пользователе.
+
+    Args:
+        user_update (schemas.UserUpdate): Модель данных с обновленной информацией о пользователе.
+        user (UserTable): Текущий авторизованный пользователь.
+        session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        schemas.UserSchema: Модель данных обновленного пользователя.
+
+    Raises:
+        HTTPException: Если обновление пользователя не удалось.
+    """
     query = text(
         """
         UPDATE users
@@ -127,6 +176,19 @@ async def delete_current_user(
     user: UserTable = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
+    """
+    Удаление текущего пользователя.
+    
+    Args:
+        user (UserTable): Текущий авторизованный пользователь.
+        session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
+        
+    Returns:
+        dict: Словарь с сообщением об успешном удалении текущего пользователя.
+        
+    Raises:
+        HTTPException: Если удаление текущего пользователя не удалось.
+    """
     query = text(
         """
         DELETE FROM users WHERE id = :user_id
@@ -144,6 +206,20 @@ async def delete_user_by_id(
     user: UserTable = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
+    """
+    Удаление пользователя по ID.
+
+    Args:
+        id (int): Идентификатор пользователя, которого необходимо удалить.
+        user (UserTable, optional): Текущий пользователь, авторизованный в системе.
+        session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
+
+    Raises:
+        HTTPException: Если текущий пользователь не является суперпользователем и не соответствует ID пользователя для удаления.
+
+    Returns:
+        dict: Словарь с сообщением об успешном удалении пользователя.
+    """
     if not (user.is_superuser or id == user.id):
         raise HTTPException(status_code=403, detail="У вас нет прав на это действие.")
     query = text(
@@ -165,6 +241,15 @@ async def search_users(
     search_query: str = Query(..., min_length=1, description="Search query"),
     session: AsyncSession = Depends(get_async_session),
 ):
+    """
+    Поиск пользователей по имени пользователя.
+
+    Args:
+        search_query (str): Строка для поиска пользователей.
+
+    Returns:
+        List[schemas.UserSchema]: Список найденных пользователей.
+    """
     query = text(
         """
         SELECT * 

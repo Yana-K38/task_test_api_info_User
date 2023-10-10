@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from src.api.router import router_user
-from src.apps.schemas import UserCreate, UserRead
+from src.apps.schemas import UserCreate, UserRead,UserSchema
 from src.db import UserTable
 from src.services.auth import auth_backend, current_user, fastapi_users
 
