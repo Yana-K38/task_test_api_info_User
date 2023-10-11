@@ -6,9 +6,7 @@ from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.engine.cursor import CursorResult
 from sqlalchemy.exc import DatabaseError, IntegrityError, InternalError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import validates
-from sqlalchemy.sql import text
+from sqlalchemy.orm import declarative_base, validates
 
 from src.apps.schemas import UserSchema
 from src.db import Base

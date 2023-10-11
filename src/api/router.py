@@ -8,8 +8,9 @@ from sqlalchemy.sql import text
 from src.apps import schemas
 from src.apps.models import UserTable
 from src.db import get_async_session
-from src.services.auth import current_user
 from src.logger import logger
+from src.services.auth import current_user
+from src.services.sorted import sorted_query
 
 router_user = APIRouter(
     tags=["Users"],
@@ -22,24 +23,45 @@ router_user = APIRouter(
     status_code=status.HTTP_200_OK,
     response_model=List[schemas.UserSchema],
 )
-async def get_all_users(session: AsyncSession = Depends(get_async_session)):
+async def get_all_users(
+    session: AsyncSession = Depends(get_async_session),
+    filter_username: str = Query(None, description="Фильтр по имени пользователя"),
+    filter_active: bool = Query(None, description="Фильтр по активности"),
+    sort_by: str = Query(None, description="Поле для сортировки"),
+):
     """
     Получение списка всех пользователей.
 
     Args:
         session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
+        filter_username (str, optional): Фильтр по имени пользователя.
+        filter_active (bool, optional): Фильтр по активности.
+        sort_by (str, optional): Поле для сортировки.
 
     Returns:
         List[schemas.UserSchema]: Список моделей данных всех пользователей в системе.
     """
-    query = text(
+    sql_query = text(
         """
-            SELECT id, username, email, avatar, phone_number, is_active, is_superuser, is_verified
-            FROM users
-            """
+        SELECT id, username, email, avatar, phone_number, is_active, is_superuser, is_verified
+        FROM users
+        """
     )
+    sql_query = sorted_query(sort_by)
+    parameters = {}
+
+    if filter_username:
+        sql_query += " WHERE LOWER(username) = LOWER(:filter_username)"
+        parameters["filter_username"] = filter_username
+
+    if filter_active is not None:
+        if "WHERE" in sql_query:
+            sql_query += " AND is_active = :filter_active"
+        else:
+            sql_query += " WHERE is_active = :filter_active"
+        parameters["filter_active"] = filter_active
     try:
-        result = await session.execute(query)
+        result = await session.execute(text(sql_query), parameters)
         user_dicts = result.mappings().fetchall()
         users = [
             schemas.UserSchema(
@@ -57,7 +79,10 @@ async def get_all_users(session: AsyncSession = Depends(get_async_session)):
         return users
     except Exception as e:
         logger.error(f"Error in get_all_users: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal Server Error",
+        )
 
 
 @router_user.get(
@@ -185,14 +210,14 @@ async def delete_current_user(
 ):
     """
     Удаление текущего пользователя.
-    
+
     Args:
         user (UserTable): Текущий авторизованный пользователь.
         session (AsyncSession, optional): Асинхронная сессия SQLAlchemy.
-        
+
     Returns:
         dict: Словарь с сообщением об успешном удалении текущего пользователя.
-        
+
     Raises:
         HTTPException: Если удаление текущего пользователя не удалось.
     """
@@ -229,7 +254,9 @@ async def delete_user_by_id(
     """
     if not (user.is_superuser or id == user.id):
         logger.info("You don't have the rights to do this", extra={"status_code": 403})
-        raise HTTPException(status_code=403, detail="You don't have the rights to do this.")
+        raise HTTPException(
+            status_code=403, detail="You don't have the rights to do this."
+        )
     query = text(
         """
         DELETE FROM users WHERE id = :user_id
@@ -283,6 +310,11 @@ async def search_users(
         user_schema = schemas.UserSchema(**user_dict)
         user_list.append(user_schema)
     if not user_list:
-        logger.info("There is no user with this name in the database.", extra={"status_code": 404})
-        raise HTTPException(status_code=404, detail="There is no user with this name in the database.")
+        logger.info(
+            "There is no user with this name in the database.",
+            extra={"status_code": 404},
+        )
+        raise HTTPException(
+            status_code=404, detail="There is no user with this name in the database."
+        )
     return user_list

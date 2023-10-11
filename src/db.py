@@ -5,10 +5,9 @@ from fastapi_users_db_sqlalchemy import (SQLAlchemyBaseUserTable,
                                          SQLAlchemyUserDatabase)
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-Base: DeclarativeMeta = declarative_base()
+Base = declarative_base()
 
 DATABASE_NAME = "applications.sqlite"
 
