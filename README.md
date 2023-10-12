@@ -39,6 +39,10 @@ docker exec -it <id контейнера> python src/data/load_sql.py
 "username": admin
 "password": admin
 ```
+5. Запустить тесты:
+```
+docker exec -it <id контейнера> pytest src/test/test.py
+```
 
 ##### После запуска проекта, документация будет доступна по адресу:
 ```http://127.0.0.1:8000/docs/```
