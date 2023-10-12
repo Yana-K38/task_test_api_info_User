@@ -1,0 +1,57 @@
+[
+    {
+        "id": 1,
+        "email": "Yana@example.com",
+        "username": "Yana",
+        "hashed_password": "$2b$12$Mdjs.msti2kOTKH4/dLQMeZ6rJuvK2WUIbetgs1hUikplzKuawoUa",
+        "avatar": null,
+        "phone_number": null,
+        "is_active": true,
+        "is_superuser": false,
+        "is_verified": false
+    },
+    {
+        "id": 2,
+        "email": "Admin@example.com",
+        "username": "admin",
+        "hashed_password": "$2b$12$cneuquwnLocJFmKZnew16etnJSYmLsGsINfvFOansP.hgjVHFJsQG",
+        "avatar": null,
+        "phone_number": null,
+        "is_active": true,
+        "is_superuser": true,
+        "is_verified": false
+    },
+    {
+        "id": 3,
+        "email": "Olga@example.com",
+        "username": "Olga",
+        "hashed_password": "$2b$12$7Axx9a7DBFAX10aTFdpaxevBxZp0ppbzVxpaDvNJ/SN3/QSyZbnG.",
+        "avatar": null,
+        "phone_number": null,
+        "is_active": true,
+        "is_superuser": false,
+        "is_verified": false
+    },
+    {
+        "id": 4,
+        "email": "Anna@example.com",
+        "username": "Anna",
+        "hashed_password": "$2b$12$SQlHAJmdj5oGwb1QZblkmu7LUNCevv.1us8JzQ6L4xRprZoyHoxUm",
+        "avatar": null,
+        "phone_number": null,
+        "is_active": true,
+        "is_superuser": false,
+        "is_verified": false
+    },
+    {
+        "id": 5,
+        "email": "Oleg@example.com",
+        "username": "Oleg",
+        "hashed_password": "$2b$12$NBchwJOf4DFLFhYsvVWJGuxaTh.7bNopERbgoxFINeQmhkwgoXjIW",
+        "avatar": null,
+        "phone_number": null,
+        "is_active": true,
+        "is_superuser": false,
+        "is_verified": false
+    }
+]
